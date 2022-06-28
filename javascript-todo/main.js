@@ -41,3 +41,15 @@ let createPost = () => {
     `;
     input.value = "";
   };
+
+let deletePost = (e) => {
+    e.parentElement.parentElement.remove(
+        posts.innerHTML -= `
+        <div>
+            <span class="options">
+                <i onClick="deletePost(this)" class="fas fa-trash-alt"></i>
+            </span>
+        </div>
+        `
+    );
+};
