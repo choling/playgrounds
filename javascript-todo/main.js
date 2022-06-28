@@ -9,6 +9,13 @@ form.addEventListener("submit", (e) => {
   
     formValidation();
 });
+
+let data = {};
+
+let acceptData = () => {
+    data["text"] = input.value;
+    console.log(data);
+};
   
 let formValidation = () => {
     if (input.value === "") {
@@ -17,5 +24,7 @@ let formValidation = () => {
     } else {
         console.log("successs");
         msg.innerHTML = "";
+        acceptData();
     }
 };
+
