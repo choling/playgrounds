@@ -1,0 +1,77 @@
+integrations:
+  node_exporter:
+    enabled: true
+    metric_relabel_configs:
+      - action: keep
+        regex: node_filesystem_files_free|node_network_transmit_packets_total|node_uname_info|node_memory_internal_bytes|node_vmstat_pgmajfault|node_filesystem_avail_bytes|node_filesystem_files|node_memory_MemFree_bytes|node_network_receive_drop_total|node_load1|node_memory_compressed_bytes|node_memory_Buffers_bytes|node_network_transmit_drop_total|node_network_receive_bytes_total|node_textfile_scrape_error|node_memory_MemAvailable_bytes|node_disk_io_time_weighted_seconds_total|node_cpu_seconds_total|node_filesystem_readonly|node_filesystem_size_bytes|node_network_receive_packets_total|node_network_transmit_errs_total|node_memory_Cached_bytes|node_memory_Slab_bytes|node_memory_MemTotal_bytes|node_disk_io_time_seconds_total|node_network_transmit_bytes_total|node_disk_read_bytes_total|node_memory_wired_bytes|node_disk_written_bytes_total|node_memory_purgeable_bytes|node_memory_total_bytes|node_network_receive_errs_total|node_load15|node_load5
+        source_labels:
+          - __name__
+    relabel_configs:
+      - replacement: $(hostname)
+        source_labels:
+          - agent_hostname
+        target_label: instance
+      - replacement: integrations/macos-node
+        source_labels:
+          - agent_hostname
+        target_label: job
+  prometheus_remote_write:
+    - basic_auth:
+        password: eyJrIjoiOWY3MzE1NTE1MzIwZDk0MDU4YWY3ZWYyZWNlNjZiNzJjMWJjNTdjYiIsIm4iOiJzdGFjay00NDIyMDEtZWFzeXN0YXJ0LXByb20tcHVibGlzaGVyIiwiaWQiOjcxNTMxMH0=
+        username: 585173
+      url: https://prometheus-prod-18-prod-ap-southeast-0.grafana.net/api/prom/push
+logs:
+  configs:
+    - clients:
+        - basic_auth:
+            password: eyJrIjoiOWY3MzE1NTE1MzIwZDk0MDU4YWY3ZWYyZWNlNjZiNzJjMWJjNTdjYiIsIm4iOiJzdGFjay00NDIyMDEtZWFzeXN0YXJ0LXByb20tcHVibGlzaGVyIiwiaWQiOjcxNTMxMH0=
+            username: 291556
+          url: https://logs-prod-011.grafana.net/loki/api/v1/push
+      name: integrations
+      positions:
+        filename: /tmp/positions.yaml
+      scrape_configs:
+        - job_name: integrations/node_exporter_direct_scrape
+          pipeline_stages:
+            - multiline:
+                firstline: ^([\w]{3} )?[\w]{3} +[\d]+ [\d]+:[\d]+:[\d]+|[\w]{4}-[\w]{2}-[\w]{2}
+                  [\w]{2}:[\w]{2}:[\w]{2}(?:[+-][\w]{2})?
+            - regex:
+                expression: (?P<timestamp>([\w]{3} )?[\w]{3} +[\d]+
+                  [\d]+:[\d]+:[\d]+|[\w]{4}-[\w]{2}-[\w]{2}
+                  [\w]{2}:[\w]{2}:[\w]{2}(?:[+-][\w]{2})?) (?P<hostname>\S+)
+                  (?P<sender>.+?)\[(?P<pid>\d+)\]:? (?P<message>(?s:.*))$
+            - labels:
+                ? hostname
+                ? pid
+                ? sender
+            - match:
+                selector: '{sender!="", pid!=""}'
+                stages:
+                  - template:
+                      source: message
+                      template: "{{.sender }}[{{.pid}}]: {{ .message }}"
+                  - labeldrop:
+                      - pid
+                  - output:
+                      source: message
+          static_configs:
+            - labels:
+                __path__: /var/log/*.log
+                instance: $(hostname)
+                job: integrations/macos-node
+              targets:
+                - localhost
+      target_config:
+        sync_period: 10s
+metrics:
+  configs:
+    - name: integrations
+      remote_write:
+        - basic_auth:
+            password: eyJrIjoiOWY3MzE1NTE1MzIwZDk0MDU4YWY3ZWYyZWNlNjZiNzJjMWJjNTdjYiIsIm4iOiJzdGFjay00NDIyMDEtZWFzeXN0YXJ0LXByb20tcHVibGlzaGVyIiwiaWQiOjcxNTMxMH0=
+            username: 585173
+          url: https://prometheus-prod-18-prod-ap-southeast-0.grafana.net/api/prom/push
+  global:
+    scrape_interval: 60s
+  wal_directory: /tmp/grafana-agent-wal
