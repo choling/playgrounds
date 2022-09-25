@@ -4,7 +4,7 @@ integrations:
   node_exporter:
     enabled: true
     relabel_configs:
-    - replacement: <this_mac_hostname>
+    - replacement: $(hostname)
       source_labels: [agent_hostname]
       target_label: instance
     - replacement: "integrations/macos-node"
@@ -26,7 +26,7 @@ logs:
       - targets:
         - localhost
         labels:
-          instance: <this_mac_hostname>
+          instance: $(hostname)
           __path__: /var/log/*.log
           job: integrations/macos-node
       pipeline_stages:
